@@ -10,23 +10,26 @@ export function listarCardapio() {
   return hamburgueriaRepository.listar();
 }
 export function cadastrarPedido(body) {
-  console.log("chegou logic")
-  const produtos = hamburgueriaRepository.listar()
-
-  const novoPedido={
-    cliente:body.cliente,
-    status:body.status,
-    total:body.total,
-  }
-  const pedidoCadastrado = hamburgueriaRepository.criarPedido(novoPedido);
   
-  const produto = hamburgueriaRepository.buscarPorIdProduto(body.produtoId);
-  const itensPedido = hamburgueriaRepository.criarItensPedido({
+  const novoPedido={
+    cliente:body.cliente
+  }
+  const pedidoCadastrado = hamburgueriaRepository.criarPedido(novoPedido)
+  console.log("chegou logic")
+  
+  const itens = body.itens
+  const itensPedido =  itens.map((item) => {
+    console.log("chegou no item")
+    const produto = hamburgueriaRepository.buscarPorIdProduto(item.produtoId);
+    return hamburgueriaRepository.criarItensPedido({
     pedidoId: pedidoCadastrado.id,
-    produtoId: produto.id,
-    quantidade: body.quantidade,
+    produtoId: item.produtoId,
+    quantidade: item.quantidade,
     precoUnitario: produto.preco
-  });
-  const itensPedidoCadastrado = hamburgueriaRepository.buscarPorIdItensPedido(itensPedido.id);
-  return {pedidoCadastrado, itensPedidoCadastrado};
+  })
+})
+  const total = itensPedido.reduce((total, item) => total + item.precoUnitario * item.quantidade, 0);
+  console.log("total", total)
+  const pedidoAtualizado = hamburgueriaRepository.atualizarPedido(pedidoCadastrado.id, { total });
+  return {pedidoAtualizado};
 }

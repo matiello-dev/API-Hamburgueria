@@ -65,14 +65,12 @@ export function criarPedido(pedido) {
     .prepare(
       `
       INSERT INTO pedidos
-        (cliente, status, total)
-      VALUES (?, ?, ?)
+        (cliente)
+      VALUES (?)
     `,
     )
     .run(
-      pedido.cliente,
-      pedido.status ?? null,
-      pedido.total ?? null,
+      pedido.cliente
     );
     console.log("resultado", buscarPorIdPedido(Number(resultado.lastInsertRowid)));
   return buscarPorIdPedido(Number(resultado.lastInsertRowid));
@@ -98,36 +96,34 @@ export function criarItensPedido(itens) {
 }
 
 // Atualiza uma tarefa e retorna o registro atualizado ou null se ela não existir.
-export function atualizar(id, tarefa) {
-  const tarefaAtual = buscarPorId(id);
-
-  if (!tarefaAtual) return null;
+export function atualizarPedido(id, pedido) {
+  const pedidoAtual = buscarPorIdPedido(id);
+  console.log("chegou no update")
+  if (!pedidoAtual) return null;
 
   // O SQL é fixo: cada ? recebe um valor na mesma ordem dos campos.
   // A leitura anterior mantém compatibilidade com atualizações parciais.
-  const dados = { ...tarefaAtual, ...tarefa };
+  const dados = { ...pedidoAtual, ...pedido };
 
   db.prepare(
     `
-    UPDATE tarefas
-    SET titulo = ?, descricao = ?, prioridade = ?, concluida = ?, usuarioId = ?
+    UPDATE pedidos
+    SET cliente = ?, status = ?, total = ?
     WHERE id = ?
   `,
   ).run(
-    dados.titulo,
-    dados.descricao ?? null,
-    dados.prioridade ?? null,
-    dados.concluida ? 1 : 0,
-    dados.usuarioId ?? null,
+    dados.cliente,
+    dados.status ?? null,
+    dados.total ?? null,
     id,
   );
 
-  return buscarPorId(id);
+  return buscarPorIdPedido(id);
 }
 
 // Remove uma tarefa e informa se alguma linha foi removida.
 export function remover(id) {
-  const resultado = db.prepare("DELETE FROM tarefas WHERE id = ?").run(id);
+  const resultado = db.prepare("DELETE FROM pedidos WHERE id = ?").run(id);
 
   return resultado.changes > 0;
 }
