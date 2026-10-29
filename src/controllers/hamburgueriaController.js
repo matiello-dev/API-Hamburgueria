@@ -3,6 +3,12 @@ import * as hamburgueriaLogic from "../logic/hamburgueriaLogic.js";
 
 export async function obterProduto(request, response) {
   try {
+  
+    const id = Number(request.params.id);
+  if(isNaN(id) ){
+    return response.status(400).json({ error: "ID precisa ser um número válido" });
+  }
+      
     const produto = await hamburgueriaLogic.obterCardapio(request.params.id);
 
     if(produto === null){
@@ -37,6 +43,13 @@ export async function listarCardapio(request, response) {
 export async function cadastrarPedido(request, response) {
   try {
     console.log("chegou controller")
+    if(request.body.itens.length === 0 ){
+      return response.status(400).json({ error: "O pedido deve conter pelo menos um item" });
+    }
+    if(!request.body.cliente || request.body.cliente.trim() === ""){
+      return response.status(400).json({ error: "O pedido deve conter o nome do cliente" });
+    }
+    
     const novoPedido = await hamburgueriaLogic.cadastrarPedido(request.body ?? {});
 
     return response.status(201).json(novoPedido);

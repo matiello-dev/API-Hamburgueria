@@ -21,6 +21,15 @@ export function cadastrarPedido(body) {
   const itensPedido =  itens.map((item) => {
     console.log("chegou no item")
     const produto = hamburgueriaRepository.buscarPorIdProduto(item.produtoId);
+    if(item.quantidade <=0){
+      const erro = new Error ("quantidade deve ser maior que zero");
+      erro.statusCode = 400;
+      throw erro;
+      
+    }
+    if(!hamburgueriaRepository.buscarPorIdProduto(item.id)){
+      console.log ("Id não encontrado")
+    }
     return hamburgueriaRepository.criarItensPedido({
     pedidoId: pedidoCadastrado.id,
     produtoId: item.produtoId,
