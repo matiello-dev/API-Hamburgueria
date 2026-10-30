@@ -10,35 +10,100 @@ export function listarCardapio() {
   return hamburgueriaRepository.listar();
 }
 export function cadastrarPedido(body) {
-  
-  const novoPedido={
-    cliente:body.cliente
+  const cliente = typeof body.cliente === "string" ? body.cliente.trim() : "";
+  if (cliente.length < 2 || cliente.length > 60) {
+    const erro = new Error("O nome do cliente deve ter entre 2 e 60 caracteres");
+    erro.statusCode = 400;
+    throw erro;
   }
-  const pedidoCadastrado = hamburgueriaRepository.criarPedido(novoPedido)
-  console.log("chegou logic")
-  
-  const itens = body.itens
-  const itensPedido =  itens.map((item) => {
-    console.log("chegou no item")
-    const produto = hamburgueriaRepository.buscarPorIdProduto(item.produtoId);
-    if(item.quantidade <=0){
-      const erro = new Error ("quantidade deve ser maior que zero");
+  if (!Array.isArray(body.itens) || body.itens.length === 0) {
+    const erro = new Error("O pedido deve conter pelo menos um item");
+    erro.statusCode = 400;
+    throw erro;
+  }
+
+  // Valida TODOS os itens antes de gravar qualquer coisa no banco,
+  // para não deixar pedido "órfão" quando um item é recusado.
+  const itensValidados = body.itens.map((item) => {
+    const quantidade = Number(item.quantidade);
+    if (!Number.isInteger(quantidade) || quantidade <= 0 || quantidade > 10) {
+      const erro = new Error("A quantidade deve ser um inteiro entre 1 e 10");
       erro.statusCode = 400;
       throw erro;
-      
     }
-    if(!hamburgueriaRepository.buscarPorIdProduto(item.id)){
-      console.log ("Id não encontrado")
+    const produto = hamburgueriaRepository.buscarPorIdProduto(Number(item.produtoId));
+    if (!produto) {
+      const erro = new Error(`Produto ${item.produtoId} não encontrado`);
+      erro.statusCode = 404;
+      throw erro;
     }
-    return hamburgueriaRepository.criarItensPedido({
-    pedidoId: pedidoCadastrado.id,
-    produtoId: item.produtoId,
-    quantidade: item.quantidade,
-    precoUnitario: produto.preco
-  })
-})
-  const total = itensPedido.reduce((total, item) => total + item.precoUnitario * item.quantidade, 0);
-  console.log("total", total)
-  const pedidoAtualizado = hamburgueriaRepository.atualizarPedido(pedidoCadastrado.id, { total });
-  return {pedidoAtualizado};
+    if (produto.disponivel === 0) {
+      const erro = new Error(`${produto.nome} está indisponível`);
+      erro.statusCode = 409;
+      throw erro;
+    }
+    return { produto, quantidade };
+  });
+
+  const pedido = hamburgueriaRepository.criarPedido({ cliente });
+  for (const { produto, quantidade } of itensValidados) {
+    hamburgueriaRepository.criarItensPedido({
+      pedidoId: pedido.id,
+      produtoId: produto.id,
+      quantidade,
+      precoUnitario: produto.preco,
+    });
+  }
+
+  const total = itensValidados.reduce(
+    (soma, { produto, quantidade }) => soma + produto.preco * quantidade,
+    0,
+  );
+  hamburgueriaRepository.atualizarPedido(pedido.id, { total });
+
+  // Devolve o pedido "achatado" (como o front espera): id, cliente, status, total, itens.
+  return mostrarPedido(pedido.id);
+}
+
+export function mostrarPedido(id) {
+  const pedido = hamburgueriaRepository.buscarPorIdPedido(id);
+  if (!pedido) {
+    const erro = new Error("Pedido não encontrado");
+    erro.statusCode = 404;
+    throw erro;
+  }
+  const itens = hamburgueriaRepository.listarItensPorPedido(id);
+  return { ...pedido, itens };
+}
+
+export function atualizarStatusPedido(id, status) {
+  console.log("chegou logic atualizarStatusPedido")
+  const STATUS_VALIDOS = ["recebido", "preparando", "pronto", "entregue", "cancelado"];
+  if (!STATUS_VALIDOS.includes(status)) {
+    const erro = new Error("Status inválido");
+    erro.statusCode = 400;
+    throw erro;
+  }
+  const pedido = hamburgueriaRepository.buscarPorIdPedido(id);
+  if(pedido === undefined){
+    const erro = new Error ("pedido não encontrado");
+    erro.statusCode = 404;
+    throw erro;
+  }
+  const STATUS_SEGUINTES = {
+    recebido: ["preparando", "cancelado"],
+    preparando: ["pronto", "cancelado"],
+    pronto: ["entregue", "cancelado"],
+    entregue: [],
+    cancelado: [],
+  };
+  const statusAtual = pedido.status;
+  if (!STATUS_SEGUINTES[statusAtual].includes(status)) {
+    console.log("chegou no erro")
+    const erro = new Error(`Não é possível alterar o status de ${statusAtual} para ${status}`);
+    erro.statusCode = 400;
+    throw erro;
+  }
+  hamburgueriaRepository.atualizarPedido(id, { status });
+  return mostrarPedido(id);
 }

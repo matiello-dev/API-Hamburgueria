@@ -5,12 +5,14 @@ import * as hamburgueriaController from "./controllers/hamburgueriaController.js
 const app = express();
 const PORTA = Number(process.env.PORT || 3000);
 
+app.use("/app",express.static("public"))
+
 // Permite que o SimuladorRequest.html seja aberto fora deste projeto.
 app.use((request, response, next) => {
   response.setHeader("Access-Control-Allow-Origin", "*");
   response.setHeader(
     "Access-Control-Allow-Methods",
-    "GET,OPTIONS",
+    "GET,POST,PATCH,OPTIONS",
   );
   response.setHeader(
     "Access-Control-Allow-Headers",
@@ -26,9 +28,13 @@ app.use((request, response, next) => {
 
 app.use(express.json());
 
+
 app.get("/produtos/:id", hamburgueriaController.obterProduto);
 app.get("/produtos", hamburgueriaController.listarCardapio);
-app.post("/produtos", hamburgueriaController.cadastrarPedido);
+app.post("/pedidos", hamburgueriaController.cadastrarPedido);
+app.get("/pedidos/:id", hamburgueriaController.mostrarPedido)
+app.patch("/pedidos/:id/status", hamburgueriaController.atualizarStatusPedido)
+
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   app.listen(PORTA, () => {

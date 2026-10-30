@@ -6,8 +6,7 @@ export class Tarefa {
     id,
     titulo,
     descricao = "",
-    prioridade = "media",
-    concluida = false,
+    prioridade = "media"
   }) {
     if (typeof titulo !== "string" || titulo.trim() === "") {
       throw new Error("O campo titulo é obrigatório");
@@ -24,6 +23,5 @@ export class Tarefa {
     this.titulo = titulo.trim();
     this.descricao = descricao;
     this.prioridade = prioridade;
-    this.concluida = concluida;
   }
 }
