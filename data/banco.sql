@@ -22,6 +22,12 @@ produtoId INTEGER NOT NULL REFERENCES produtos (id),
 quantidade INTEGER NOT NULL CHECK (quantidade > 0),
 precoUnitario REAL NOT NULL
 );
+CREATE TABLE IF NOT EXISTS funcionarios (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+nome TEXT NOT NULL,
+email TEXT NOT NULL UNIQUE,
+senhaHash TEXT NOT NULL
+);
 INSERT OR IGNORE INTO produtos (id, nome, categoria, preco, disponivel)
 VALUES
 (1, 'X-Burger', 'lanche', 25.0, 1),

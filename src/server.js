@@ -1,6 +1,8 @@
 import express from "express";
 import { fileURLToPath } from "node:url";
+import * as funcionariosController from "./controllers/funcionarioController.js";
 import * as hamburgueriaController from "./controllers/hamburgueriaController.js";
+import { autenticar } from "./middlewares/autenticar.js";
 
 const app = express();
 const PORTA = Number(process.env.PORT || 3000);
@@ -28,12 +30,14 @@ app.use((request, response, next) => {
 
 app.use(express.json());
 
+app.post("/funcionarios", funcionariosController.cadastrar);
+app.post("/login", funcionariosController.login);
 
-app.get("/produtos/:id", hamburgueriaController.obterProduto);
-app.get("/produtos", hamburgueriaController.listarCardapio);
-app.post("/pedidos", hamburgueriaController.cadastrarPedido);
-app.get("/pedidos/:id", hamburgueriaController.mostrarPedido)
-app.patch("/pedidos/:id/status", hamburgueriaController.atualizarStatusPedido)
+app.get("/produtos/:id",autenticar , hamburgueriaController.obterProduto);
+app.get("/produtos", autenticar, hamburgueriaController.listarCardapio);
+app.post("/pedidos", autenticar, hamburgueriaController.cadastrarPedido);
+app.get("/pedidos/:id",autenticar , hamburgueriaController.mostrarPedido)
+app.patch("/pedidos/:id/status", autenticar, hamburgueriaController.atualizarStatusPedido)
 
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
