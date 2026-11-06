@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import * as funcionariosController from "./controllers/funcionarioController.js";
 import * as hamburgueriaController from "./controllers/hamburgueriaController.js";
 import { autenticar } from "./middlewares/autenticar.js";
+import * as pokemonController from "./controllers/pokemonController.js";
 
 const app = express();
 const PORTA = Number(process.env.PORT || 3000);
@@ -38,6 +39,7 @@ app.get("/produtos", autenticar, hamburgueriaController.listarCardapio);
 app.post("/pedidos", autenticar, hamburgueriaController.cadastrarPedido);
 app.get("/pedidos/:id",autenticar , hamburgueriaController.mostrarPedido)
 app.patch("/pedidos/:id/status", autenticar, hamburgueriaController.atualizarStatusPedido)
+app.get("/pokemon/:pokemon", autenticar, pokemonController.consultar);
 
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
