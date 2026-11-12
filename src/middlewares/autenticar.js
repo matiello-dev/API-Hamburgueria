@@ -3,9 +3,9 @@ import jwt from "jsonwebtoken";
 // Roda ANTES do controller. Se o token for válido, deixa passar (next);
 // se não, a requisição para aqui com 401.
 export function autenticar(request, response, next) {
+  console.log("chegou no middleware autenticar");
   const header = request.headers.authorization ?? "";
   const [tipo, token] = header.split(" ");
-
   if (tipo !== "Bearer" || !token) {
     return response.status(401).json({ mensagem: "Faça login para continuar" });
   }
